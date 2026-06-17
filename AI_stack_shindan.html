@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あなたの最強AI Stack診断 | Haku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Cormorant+Garamond:wght@400;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #0c0c18;
+  --bg2:     #13131f;
+  --gold:    #c8a96e;
+  --gold2:   #e8c98a;
+  --purple:  #9b87b8;
+  --purple2: #7b6a9e;
+  --cream:   #ede9f4;
+  --muted:   rgba(237,233,244,0.45);
+  --card:    rgba(255,255,255,0.042);
+  --card2:   rgba(255,255,255,0.075);
+  --border:  rgba(200,169,110,0.18);
+  --border2: rgba(255,255,255,0.07);
+  --green:   #6fcf97;
+  --blue:    #56b2e0;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(155,135,184,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(200,169,110,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(155,135,184,0.05) 0%, transparent 40%);
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--gold));
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+}
+
+/* ── MAIN WRAPPER ── */
+.app {
+  position: relative; z-index: 1;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── SCREENS ── */
+.screen {
+  width: 100%;
+  display: none;
+  animation: fadeIn 0.45s ease;
+}
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── START SCREEN ── */
+.start-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  border: 1px solid rgba(200,169,110,0.3);
+  background: rgba(200,169,110,0.06);
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.start-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(26px, 7vw, 36px);
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--cream);
+  margin-bottom: 12px;
+}
+
+.start-title span { color: var(--gold); }
+
+.start-sub {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.8;
+  margin-bottom: 36px;
+}
+
+.stack-preview {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.stack-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.stack-chip .icon { font-size: 16px; }
+.stack-plus { color: var(--gold); font-size: 18px; opacity: 0.6; }
+
+.start-stats {
+  display: flex; gap: 24px; margin-bottom: 40px;
+}
+.stat-item {
+  text-align: center;
+}
+.stat-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--gold);
+  display: block;
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── BUTTONS ── */
+.btn-primary {
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--gold) 0%, #b89060 40%, var(--purple) 100%);
+  box-shadow: 0 4px 28px rgba(200,169,110,0.28), 0 2px 8px rgba(0,0,0,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(200,169,110,0.36); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif;
+  transition: all 0.2s;
+  margin-top: 12px;
+  width: 100%;
+}
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── QUIZ SCREEN ── */
+.quiz-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-top: 40px;
+}
+.quiz-step {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+.quiz-skip {
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.question-card {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 28px 24px;
+  margin-bottom: 20px;
+}
+.question-icon {
+  font-size: 28px;
+  margin-bottom: 14px;
+  display: block;
+}
+.question-text {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--cream);
+  margin-bottom: 6px;
+}
+.question-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.options-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.option-btn {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.22s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--cream);
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.option-btn:hover {
+  background: rgba(200,169,110,0.07);
+  border-color: rgba(200,169,110,0.35);
+  transform: translateX(4px);
+}
+.option-btn.selected {
+  background: rgba(200,169,110,0.12);
+  border-color: var(--gold);
+  color: var(--gold2);
+}
+.option-icon { font-size: 20px; flex-shrink: 0; }
+.option-text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.option-text strong { display: block; font-weight: 700; font-size: 14px; }
+.option-text span { font-size: 12px; color: var(--muted); }
+
+/* ── LOADING ── */
+.loading-screen {
+  text-align: center;
+  padding: 60px 20px;
+}
+.loading-ring {
+  width: 64px; height: 64px;
+  border: 3px solid rgba(200,169,110,0.15);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1.1s linear infinite;
+  margin: 0 auto 24px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.loading-dots::after {
+  content: '...';
+  animation: dots 1.5s infinite;
+}
+@keyframes dots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+
+/* ── RESULT SCREEN ── */
+.result-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: var(--green);
+  border: 1px solid rgba(111,207,151,0.3);
+  background: rgba(111,207,151,0.06);
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+.result-stack-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(22px, 6vw, 30px);
+  font-weight: 600;
+  text-align: center;
+  color: var(--cream);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.result-tagline {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+/* Tool cards */
+.tools-section {
+  width: 100%;
+  margin-bottom: 20px;
+}
+.tools-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.tool-card {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.tool-card.main-agent {
+  background: rgba(200,169,110,0.07);
+  border-color: rgba(200,169,110,0.30);
+}
+.tool-card.connector1 {
+  background: rgba(155,135,184,0.07);
+  border-color: rgba(155,135,184,0.28);
+}
+.tool-card.connector2 {
+  background: var(--card);
+  border-color: var(--border2);
+}
+.tool-emoji {
+  font-size: 32px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.tool-info { flex: 1; }
+.tool-role {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.tool-card.connector1 .tool-role { color: var(--purple); }
+.tool-card.connector2 .tool-role { color: var(--muted); }
+.tool-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cream);
+  margin-bottom: 4px;
+}
+.tool-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.tool-tag {
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(200,169,110,0.12);
+  color: var(--gold);
+  border: 1px solid rgba(200,169,110,0.2);
+  white-space: nowrap;
+}
+.tool-card.connector1 .tool-tag {
+  background: rgba(155,135,184,0.12);
+  color: var(--purple);
+  border-color: rgba(155,135,184,0.2);
+}
+.tool-card.connector2 .tool-tag {
+  background: rgba(255,255,255,0.05);
+  color: var(--muted);
+  border-color: var(--border2);
+}
+
+/* Description box */
+.desc-box {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.desc-box-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.desc-box-text {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+/* Cost bar */
+.cost-box {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cost-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.cost-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--green);
+}
+
+/* ── SHARE SECTION ── */
+.share-row {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.btn-share {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-share:hover { border-color: var(--gold); color: var(--gold); }
+.btn-retry-result {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+.btn-retry-result:hover { color: var(--cream); border-color: var(--border); }
+
+/* ── FOOTER ── */
+.footer-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(237,233,244,0.2);
+  text-align: center;
+  letter-spacing: 1.5px;
+  margin-top: 20px;
+}
+
+/* ── MASCOT ── */
+.support-mascot {
+  position: fixed; bottom: 16px; left: 24px; z-index: 9999;
+  cursor: grab; user-select: none;
+  display: flex; flex-direction: column; align-items: center;
+  touch-action: none;
+}
+.support-mascot.dragging { cursor: grabbing; transition: none !important; }
+.support-mascot.dragging .mascot-wrap {
+  animation-play-state: paused;
+  transform: scale(1.1) rotate(3deg) !important;
+  filter: drop-shadow(0 16px 40px rgba(100,80,220,0.5)) drop-shadow(2px 5px 10px rgba(0,0,0,0.65)) !important;
+}
+.mascot-wrap {
+  width: 140px; height: 180px;
+  animation: charFloat 4s ease-in-out infinite;
+  filter: drop-shadow(0 10px 28px rgba(0,100,200,0.28)) drop-shadow(0 4px 12px rgba(0,0,0,0.65));
+  transition: transform 0.3s ease, filter 0.3s ease;
+  transform-origin: bottom center;
+}
+.support-mascot:hover .mascot-wrap {
+  filter: drop-shadow(0 14px 36px rgba(60,120,255,0.38)) drop-shadow(0 4px 12px rgba(0,0,0,0.65));
+  animation-play-state: paused;
+  transform: scale(1.08) translateY(-6px);
+}
+@keyframes charFloat {
+  0%   { transform: translateY(0px) rotate(-1deg); }
+  50%  { transform: translateY(-10px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(-1deg); }
+}
+.char-eye-l { animation: charBlink 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.char-eye-r { animation: charBlink 5s ease-in-out infinite 0.12s; transform-box: fill-box; transform-origin: center; }
+@keyframes charBlink { 0%,88%,100%{transform:scaleY(1);} 93%{transform:scaleY(0.06);} }
+.char-aura  { animation: auraPulse 3.5s ease-in-out infinite; }
+.char-ring1 { animation: auraRing1 8s linear infinite; transform-origin: 100px 155px; }
+.char-ring2 { animation: auraRing2 11s linear infinite; transform-origin: 100px 155px; }
+@keyframes auraPulse { 0%,100%{opacity:.4;} 50%{opacity:.85;} }
+@keyframes auraRing1 { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+@keyframes auraRing2 { from{transform:rotate(0deg);} to{transform:rotate(-360deg);} }
+.m-particle  { animation: particleFloat 2.5s ease-out infinite; }
+.m-p2 { animation-delay:.85s; }
+.m-p3 { animation-delay:1.7s; }
+@keyframes particleFloat { 0%{transform:translateY(0) scale(1);opacity:.8;} 100%{transform:translateY(-32px) scale(0);opacity:0;} }
+.support-bubble {
+  position: absolute; bottom: 108px; left: 116px;
+  transform: translateY(6px);
+  background: rgba(10,10,28,0.97);
+  border: 1px solid rgba(80,120,255,0.38);
+  border-radius: 14px; padding: 9px 15px;
+  white-space: nowrap; font-size: 12px;
+  font-family: 'Noto Sans JP', sans-serif; color: #ede9f4;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 18px rgba(80,120,255,0.14), 0 4px 16px rgba(0,0,0,0.55);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+}
+.support-bubble.visible { opacity: 1; transform: translateY(0); }
+.support-bubble::before {
+  content:''; position:absolute; top:50%; right:100%; transform:translateY(-50%);
+  border:7px solid transparent; border-right-color:rgba(80,120,255,0.38);
+}
+.support-bubble::after {
+  content:''; position:absolute; top:50%; right:calc(100% - 1px); transform:translateY(-50%);
+  border:7px solid transparent; border-right-color:rgba(10,10,28,0.97);
+}
+</style>
+</head>
+<body>
+
+<div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+
+<div class="app">
+
+  <!-- ── START SCREEN ── -->
+  <div class="screen active" id="screen-start">
+    <div class="start-badge">✦ AI STACK FINDER</div>
+    <h1 class="start-title">あなたの<span>最強AI</span><br>Stack診断</h1>
+    <p class="start-sub">
+      10問に答えるだけで<br>
+      あなたのライフスタイルに最適な<br>
+      <strong>メインAI × コネクター</strong>の組み合わせが分かる
+    </p>
+    <div class="stack-preview">
+      <div class="stack-chip"><span class="icon">🤖</span> メインAI</div>
+      <span class="stack-plus">×</span>
+      <div class="stack-chip"><span class="icon">🔌</span> コネクター</div>
+      <span class="stack-plus">×</span>
+      <div class="stack-chip"><span class="icon">⚡</span> サブツール</div>
+    </div>
+    <div class="start-stats">
+      <div class="stat-item">
+        <span class="stat-num">10</span>
+        <div class="stat-label">質問数</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">150+</span>
+        <div class="stat-label">組み合わせ</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">2分</span>
+        <div class="stat-label">所要時間</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startQuiz()">▶ 診断スタート</button>
+    <p class="footer-note" style="margin-top:24px;">BY HAKU｜AI×副業 @ai_side_haku</p>
+  </div>
+
+  <!-- ── QUIZ SCREEN ── -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-header">
+      <span class="quiz-step" id="quiz-step">Q1 / 10</span>
+      <span class="quiz-skip" onclick="skipQuestion()">スキップ →</span>
+    </div>
+    <div class="question-card">
+      <span class="question-icon" id="q-icon">💡</span>
+      <div class="question-text" id="q-text">質問テキスト</div>
+      <div class="question-hint" id="q-hint"></div>
+    </div>
+    <div class="options-grid" id="options-grid"></div>
+  </div>
+
+  <!-- ── LOADING SCREEN ── -->
+  <div class="screen" id="screen-loading">
+    <div class="loading-screen">
+      <div class="loading-ring"></div>
+      <div class="loading-text">AI Stackを分析中<span class="loading-dots"></span></div>
+    </div>
+  </div>
+
+  <!-- ── RESULT SCREEN ── -->
+  <div class="screen" id="screen-result">
+    <div style="padding-top:48px; width:100%; display:flex; flex-direction:column; align-items:center;">
+      <div class="result-badge">✓ YOUR AI STACK</div>
+      <div class="result-stack-name" id="result-name">スタック名</div>
+      <div class="result-tagline" id="result-tagline">タグライン</div>
+
+      <div class="tools-section" style="width:100%;">
+        <div class="tools-label">🧠 メインAIエージェント</div>
+        <div class="tool-card main-agent">
+          <div class="tool-emoji" id="r-agent-emoji">🤖</div>
+          <div class="tool-info">
+            <div class="tool-role">MAIN AGENT</div>
+            <div class="tool-name" id="r-agent-name">ChatGPT</div>
+            <div class="tool-desc" id="r-agent-desc">説明</div>
+          </div>
+          <div class="tool-tag" id="r-agent-price">無料〜</div>
+        </div>
+      </div>
+
+      <div class="tools-section" style="width:100%;">
+        <div class="tools-label">🔌 メインコネクター（必須）</div>
+        <div class="tool-card connector1">
+          <div class="tool-emoji" id="r-c1-emoji">🎨</div>
+          <div class="tool-info">
+            <div class="tool-role">CONNECTOR</div>
+            <div class="tool-name" id="r-c1-name">Canva</div>
+            <div class="tool-desc" id="r-c1-desc">説明</div>
+          </div>
+          <div class="tool-tag" id="r-c1-price">無料〜</div>
+        </div>
+      </div>
+
+      <div class="tools-section" style="width:100%;">
+        <div class="tools-label">⚡ サブコネクター（推奨）</div>
+        <div class="tool-card connector2">
+          <div class="tool-emoji" id="r-c2-emoji">📋</div>
+          <div class="tool-info">
+            <div class="tool-role">SUB TOOL</div>
+            <div class="tool-name" id="r-c2-name">Notion</div>
+            <div class="tool-desc" id="r-c2-desc">説明</div>
+          </div>
+          <div class="tool-tag" id="r-c2-price">無料〜</div>
+        </div>
+      </div>
+
+      <div class="desc-box">
+        <div class="desc-box-title">◈ このスタックの使い方</div>
+        <div class="desc-box-text" id="result-desc">説明文</div>
+      </div>
+
+      <div class="cost-box">
+        <div class="cost-label">📊 月額コスト目安</div>
+        <div class="cost-value" id="result-cost">¥0〜</div>
+      </div>
+
+      <button class="btn-primary" onclick="shareResult()">X（Twitter）でシェアする</button>
+      <div class="share-row">
+        <button class="btn-share" onclick="copyResult()">📋 結果をコピー</button>
+        <button class="btn-share" onclick="showDetail()">📖 詳細を見る</button>
+      </div>
+      <button class="btn-retry-result" onclick="retryAll()">↺ もう一度診断する</button>
+      <p class="footer-note">BY HAKU｜AI×副業 @ai_side_haku</p>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const AGENTS = {
+  chatgpt: {
+    name: 'ChatGPT', emoji: '🟢', price: '無料〜$20/月',
+    desc: '世界No.1シェア。画像生成・データ分析・コード実行を一体化した万能AI。初心者にも最も使いやすい。'
+  },
+  claude: {
+    name: 'Claude', emoji: '🟠', price: '無料〜$20/月',
+    desc: '日本語精度No.1。長文ライティング・コーディング・複雑な推論が得意。Cowork連携でファイル操作も可能。'
+  },
+  gemini: {
+    name: 'Gemini', emoji: '🔵', price: '無料（最強）〜$20/月',
+    desc: 'Google完全統合。無料プランが最も充実。Gmail・Drive・Calendarと連携しオフィス業務を効率化。'
+  },
+  copilot: {
+    name: 'Microsoft Copilot', emoji: '⬜', price: 'M365込み〜$20/月',
+    desc: 'Word・Excel・PowerPoint・Teams内でAIが動く。社内資料・会議サポート・Excel分析に圧倒的強み。'
+  },
+  perplexity: {
+    name: 'Perplexity', emoji: '🔷', price: '無料〜$20/月',
+    desc: 'リアルタイムWeb検索＋引用付き回答。調査・リサーチ・最新情報収集に特化したAI検索エンジン。'
+  }
+};
+
+const CONNECTORS = {
+  canva: {
+    name: 'Canva', emoji: '🎨', price: '無料〜¥1,500/月',
+    desc: 'SNS投稿・バナー・動画・プレゼンを直感操作で作成。AI機能（Magic Studio）で自動デザインも可能。'
+  },
+  notion: {
+    name: 'Notion', emoji: '📋', price: '無料〜¥1,200/月',
+    desc: 'ノート・データベース・プロジェクト管理を統合。Notion AIで文章生成・要約・タスク管理が自動化。'
+  },
+  midjourney: {
+    name: 'Midjourney', emoji: '🖼️', price: '$10〜$120/月',
+    desc: '世界最高品質のAI画像生成。リアル・アート・キャラクターなど幅広いスタイルに対応。無料枠なし。'
+  },
+  zapier: {
+    name: 'Zapier', emoji: '⚡', price: '無料（制限）〜$20/月',
+    desc: '8,000以上のアプリを自動連携。コード不要でAIと他ツールをつなぐ自動化プラットフォーム。'
+  },
+  gamma: {
+    name: 'Gamma', emoji: '📊', price: '無料〜¥1,100/月',
+    desc: 'AIが自動でプレゼンを生成。テキストを入力するだけで美しいスライドが完成。SNS投稿にも対応。'
+  },
+  n8n: {
+    name: 'n8n', emoji: '🔗', price: '無料（自己ホスト）〜$20/月',
+    desc: 'エンジニア向け高度な自動化ツール。AIエージェントのワークフロー構築・API連携・バッチ処理が可能。'
+  }
+};
+
+// ============================================================
+// QUESTIONS
+// ============================================================
+const questions = [
+  {
+    icon: '🎯', text: '今一番やりたいことは？',
+    hint: 'あなたの主な目的を選んでください',
+    options: [
+      { text: 'ゲーム・アプリを作りたい',     sub: 'コード・ツール・ゲーム制作',
+        scores: { claude:4, chatgpt:2, n8n:3, midjourney:2, notion:1 } },
+      { text: 'SNSや副業で稼ぎたい',           sub: 'コンテンツ発信・収益化',
+        scores: { chatgpt:3, claude:2, canva:4, gamma:2, notion:1 } },
+      { text: '仕事・業務を効率化したい',       sub: 'オフィスワーク・資料作成',
+        scores: { copilot:4, gemini:3, notion:3, zapier:2 } },
+      { text: '自動化・便利ツールを作りたい',   sub: 'ワークフロー・API連携',
+        scores: { claude:3, chatgpt:2, n8n:4, zapier:3, notion:1 } }
+    ]
+  },
+  {
+    icon: '💻', text: 'プログラミングの経験は？',
+    hint: '正直に選んでください',
+    options: [
+      { text: 'まったくない',         sub: 'コードは読めない',
+        scores: { chatgpt:3, gemini:2, canva:3, gamma:3 } },
+      { text: 'HTML/CSSくらい',       sub: '少し触ったことがある',
+        scores: { chatgpt:2, claude:2, canva:2, notion:2, gamma:1 } },
+      { text: 'JS/Pythonが書ける',    sub: 'ある程度コードが書ける',
+        scores: { claude:3, chatgpt:2, zapier:2, notion:2 } },
+      { text: 'バックエンドも書ける', sub: 'APIやサーバーも触れる',
+        scores: { claude:4, n8n:4, chatgpt:1 } }
+    ]
+  },
+  {
+    icon: '💰', text: '月のAIツール予算は？',
+    hint: '現在の予算感で選んでください',
+    options: [
+      { text: '0円（完全無料のみ）',  sub: '課金はしたくない',
+        scores: { gemini:4, perplexity:2, chatgpt:2, canva:2, notion:2, gamma:1 } },
+      { text: '〜1,500円',           sub: '月に1本コーヒー程度',
+        scores: { chatgpt:2, claude:2, gemini:1, canva:2, gamma:2 } },
+      { text: '〜3,000円',           sub: 'ある程度投資できる',
+        scores: { claude:3, chatgpt:2, notion:2, midjourney:2, zapier:1 } },
+      { text: '3,000円以上',         sub: 'ガチで投資する',
+        scores: { claude:2, chatgpt:2, copilot:2, midjourney:4, n8n:2 } }
+    ]
+  },
+  {
+    icon: '✨', text: '作りたいコンテンツは？',
+    hint: '一番多く作るものを選んでください',
+    options: [
+      { text: '画像・デザイン・イラスト', sub: 'SNS画像・バナー・アイコン',
+        scores: { chatgpt:2, midjourney:4, canva:4 } },
+      { text: '動画・ショート動画',       sub: 'TikTok・Reels・YouTube',
+        scores: { chatgpt:2, canva:3, gamma:1, n8n:1 } },
+      { text: '文章・記事・ブログ',       sub: 'noteブログ・メルマガ',
+        scores: { claude:4, perplexity:2, notion:3, gamma:2 } },
+      { text: 'アプリ・コード・ツール',   sub: 'Webアプリ・自動化スクリプト',
+        scores: { claude:4, chatgpt:2, n8n:3 } }
+    ]
+  },
+  {
+    icon: '📡', text: '主な発信場所・使用場所は？',
+    hint: 'どこで使うことが多いですか？',
+    options: [
+      { text: 'X・TikTok・Instagram', sub: 'SNSで発信したい',
+        scores: { chatgpt:2, claude:2, canva:4, gamma:2 } },
+      { text: 'note・ブログ・Webサイト', sub: '長文コンテンツを発信',
+        scores: { claude:4, perplexity:2, notion:3, gamma:2 } },
+      { text: '職場・社内資料・会議',    sub: 'ビジネス用途がメイン',
+        scores: { copilot:4, gemini:3, notion:3, zapier:2 } },
+      { text: '個人・趣味・学習用',      sub: '自分だけで使う',
+        scores: { gemini:2, chatgpt:2, notion:3, perplexity:2 } }
+    ]
+  },
+  {
+    icon: '👥', text: 'チームや他の人と一緒に使う？',
+    hint: '主な使い方を選んでください',
+    options: [
+      { text: '完全に一人で使う',       sub: 'ソロで完結',
+        scores: { claude:2, chatgpt:2, perplexity:1, notion:1 } },
+      { text: '2〜3人の小さいチーム', sub: '少人数でシェア',
+        scores: { notion:3, zapier:2, gamma:1, canva:1 } },
+      { text: '会社・大きいチーム',    sub: '組織全体で使う',
+        scores: { copilot:4, gemini:2, notion:3, zapier:3 } },
+      { text: 'まだ決めていない',      sub: '今後考える',
+        scores: { chatgpt:1, gemini:1, notion:2, canva:1 } }
+    ]
+  },
+  {
+    icon: '🛠️', text: '一番多い作業は？',
+    hint: '日々の主な作業内容は？',
+    options: [
+      { text: '文章を書く・編集する',    sub: 'ライティング・翻訳・要約',
+        scores: { claude:4, perplexity:2, notion:3, gamma:1 } },
+      { text: '画像・デザインを作る',   sub: 'ビジュアル制作',
+        scores: { canva:4, midjourney:3, chatgpt:2 } },
+      { text: 'データ管理・分析・整理', sub: 'スプレッドシート・DB',
+        scores: { copilot:3, gemini:3, notion:3, zapier:2 } },
+      { text: 'コード・自動化・開発',   sub: 'プログラミング・スクリプト',
+        scores: { claude:4, n8n:4, chatgpt:2 } }
+    ]
+  },
+  {
+    icon: '⭐', text: 'AIに一番求めることは？',
+    hint: '最も重視することを選んでください',
+    options: [
+      { text: '無料・コスパ重視',         sub: 'できるだけお金をかけたくない',
+        scores: { gemini:4, perplexity:2, chatgpt:2, canva:2, notion:2 } },
+      { text: '日本語の精度・自然さ',     sub: 'きれいな日本語が大切',
+        scores: { claude:4, chatgpt:3 } },
+      { text: '使いやすさ・シンプルさ',   sub: '難しい設定は不要',
+        scores: { chatgpt:3, canva:3, gamma:3, gemini:2 } },
+      { text: '機能の多さ・拡張性',       sub: 'カスタマイズして使いたい',
+        scores: { claude:2, n8n:4, zapier:3, chatgpt:1 } }
+    ]
+  },
+  {
+    icon: '🎨', text: '作業スタイルは？',
+    hint: 'あなたの好みに近いものを選んでください',
+    options: [
+      { text: 'スピード重視・すぐ結果が欲しい', sub: '素早く量産したい',
+        scores: { chatgpt:3, gemini:2, canva:3, gamma:3 } },
+      { text: '時間をかけて高品質に仕上げる', sub: 'クオリティ優先',
+        scores: { claude:4, midjourney:3, notion:2 } },
+      { text: 'テンプレートを使って効率よく',  sub: '型にはめて量産',
+        scores: { chatgpt:2, canva:3, gamma:4, notion:2 } },
+      { text: '自分流にカスタマイズしたい',    sub: 'オリジナルを追求',
+        scores: { claude:3, n8n:4, chatgpt:1 } }
+    ]
+  },
+  {
+    icon: '🚀', text: '最終的な目標は？',
+    hint: 'AIで何を達成したいですか？',
+    options: [
+      { text: 'AIで副業・収入を得たい',          sub: '月3万〜10万円を目指す',
+        scores: { chatgpt:3, claude:3, canva:3, notion:2 } },
+      { text: '自分のサービス・アプリを作りたい', sub: '起業・プロダクト開発',
+        scores: { claude:4, n8n:3, chatgpt:2, notion:2 } },
+      { text: '仕事・業務をもっと楽にしたい',    sub: '生産性向上・残業削減',
+        scores: { copilot:4, gemini:3, notion:3, zapier:3 } },
+      { text: 'AIスキルを身につけてキャリアに', sub: 'エンジニア・AIコンサル',
+        scores: { claude:3, perplexity:3, notion:3, n8n:2 } }
+    ]
+  }
+];
+
+// ============================================================
+// COMBO NAMES & DESCRIPTIONS
+// ============================================================
+const comboData = {
+  'chatgpt-canva': {
+    name: 'バイラルコンテンツマシン',
+    tagline: '量産×ビジュアルでSNSを制圧する最強コンビ',
+    desc: 'ChatGPTで文章・アイデアを瞬時に生成し、Canvaで即座にビジュアル化。TikTok・X・Instagramへの投稿コンテンツを1日10件以上量産できます。副業・アフィリエイト初心者に最もおすすめのスタック。'
+  },
+  'chatgpt-notion': {
+    name: '副業知識ベーススタック',
+    tagline: '情報を資産に変える副業系AIセット',
+    desc: 'ChatGPTでアイデア出し・文章生成を行い、Notionに蓄積・整理。副業の案件管理・ノウハウ蓄積・コンテンツカレンダーの管理まで、副業全体をAIでサポートします。'
+  },
+  'chatgpt-midjourney': {
+    name: 'AIビジュアルクリエイター',
+    tagline: '最高品質の画像×万能AIで差別化',
+    desc: 'ChatGPTでプロンプトを最適化し、Midjourneyで世界最高水準の画像を生成。ゲームアセット・キャラクターデザイン・商品画像制作など、ビジュアルで勝負するクリエイターに最適。'
+  },
+  'chatgpt-zapier': {
+    name: '自動収益化マシン',
+    tagline: '8,000+アプリを繋いで収益を自動化',
+    desc: 'ChatGPTで文章・データ処理を行い、Zapierで自動投稿・リスト収集・メール配信を自動化。コンテンツ生成から配信・フォローアップまで、人の手を介さない収益化フローを構築できます。'
+  },
+  'chatgpt-gamma': {
+    name: 'プレゼン量産スタック',
+    tagline: '提案書・スライドを瞬時に大量生成',
+    desc: 'ChatGPTで構成・文章を考え、Gammaで美しいスライドに自動変換。営業提案・セミナー資料・note記事のビジュアル版を、1日何本でも量産できます。'
+  },
+  'chatgpt-n8n': {
+    name: 'フルオート発信スタック',
+    tagline: 'AI生成から投稿まで全て自動化',
+    desc: 'ChatGPT APIとn8nを組み合わせ、コンテンツ生成→SNS自動投稿→レポート作成まで全自動化。プログラミング経験がある人が副業を完全自動化するための上級スタック。'
+  },
+  'claude-canva': {
+    name: '高品質SNSクリエイタースタック',
+    tagline: '最高の日本語×プロデザインで圧倒',
+    desc: 'Claudeの圧倒的な日本語力でキャプション・記事・コピーを生成し、Canvaで高品質なビジュアルに仕上げる。noteブログ×SNS発信を組み合わせて月3万円を目指すHaku流スタック。'
+  },
+  'claude-notion': {
+    name: 'ライター知識管理スタック',
+    tagline: '書く×管理×蓄積の最強知識型スタック',
+    desc: 'Claudeで記事・プロンプト・分析を行い、Notionに体系的に蓄積。AIコンサルタントやライターとして活動する際に、知識を資産化するプロフェッショナルなスタックです。'
+  },
+  'claude-midjourney': {
+    name: 'アート×コードクリエイター',
+    tagline: '最高のコードと最高のビジュアルを両立',
+    desc: 'ClaudeでゲームロジックやWebアプリのコードを書き、Midjourneyで高品質なビジュアルアセットを生成。インディーゲーム開発・Webサービス立ち上げに最適なクリエイタースタック。'
+  },
+  'claude-zapier': {
+    name: 'スマート自動化スタック',
+    tagline: '高品質アウトプット×自動配信の黄金比',
+    desc: 'Claudeで高精度な文章・分析を生成し、Zapierで自動的に各プラットフォームへ配信・管理。品質と量を両立した、副業上級者向けの自動化ワークフロー。'
+  },
+  'claude-gamma': {
+    name: 'AI教材クリエイタースタック',
+    tagline: 'プロ品質のコンテンツを大量生産',
+    desc: 'Claudeで教材・ハウツー記事・プロンプト解説を執筆し、Gammaで見やすいスライドに変換。noteの有料記事・セミナー資料・オンライン講座コンテンツ制作に最適。'
+  },
+  'claude-n8n': {
+    name: '超上級自動化スタック',
+    tagline: 'AIエンジニアの究極ワークフロー',
+    desc: 'Claude APIとn8nでAIエージェントを構築。データ収集→分析→自動レポート→Slack通知まで、完全自動化されたインテリジェントなワークフローを実現する上級者専用スタック。'
+  },
+  'gemini-canva': {
+    name: 'Googleユーザー発信スタック',
+    tagline: 'Google完全連携×ビジュアルで完結',
+    desc: 'GmailやGoogleドキュメントとシームレスに連携するGeminiで情報を整理・生成し、Canvaでビジュアル化。月額0円から始められる最強のコスパスタック。'
+  },
+  'gemini-notion': {
+    name: 'リサーチャー管理スタック',
+    tagline: '深い調査×完璧な整理で知識を制圧',
+    desc: 'Geminiの圧倒的なリサーチ能力（100万トークン文脈）で情報を収集・分析し、Notionに体系的に管理。研究・競合調査・市場分析を行うナレッジワーカーに最適。'
+  },
+  'gemini-midjourney': {
+    name: '調査×ビジュアルハイブリッドスタック',
+    tagline: '深いリサーチを最高のビジュアルで表現',
+    desc: 'Geminiで深い調査・分析を行い、Midjourneyで調査結果を高品質なビジュアルコンテンツに昇華。インフォグラフィック・レポート・プレゼンの質を圧倒的に高めます。'
+  },
+  'gemini-zapier': {
+    name: 'Google連携自動化スタック',
+    tagline: 'Googleエコシステム×自動化で生産性10倍',
+    desc: 'Gmail・Calendar・Driveと深く連携するGeminiの情報処理力を、Zapierで他のアプリに自動展開。Googleワークスペースユーザーが業務効率を劇的に改善するための最強スタック。'
+  },
+  'gemini-gamma': {
+    name: 'スライド量産リサーチスタック',
+    tagline: '調査から資料化まで完全自動化',
+    desc: 'Geminiで最新情報・市場調査を高速実行し、Gammaで即座にプレゼン資料化。営業資料・セミナー・社内報告を誰でも素早くプロ品質で作成できる実用派スタック。'
+  },
+  'gemini-n8n': {
+    name: 'Google×自動化パワースタック',
+    tagline: 'Google APIと深い自動化を組み合わせ',
+    desc: 'GeminiのAPI + n8nで、Google Workspaceのデータを自動処理・分析・配信するワークフローを構築。エンジニアがGoogleエコシステムを最大活用するための高度なスタック。'
+  },
+  'copilot-canva': {
+    name: 'オフィス×デザインハイブリッドスタック',
+    tagline: 'ビジネス文書とビジュアルを同時攻略',
+    desc: 'Word・Excel・TeamsでCopilotが業務をサポートしつつ、Canvaで見栄えのいいプレゼン・提案書のビジュアルを作成。社内外への発信を効率化するビジネスマン向けスタック。'
+  },
+  'copilot-notion': {
+    name: 'マイクロソフト連携ナレッジスタック',
+    tagline: 'M365のパワーをNotionで一元管理',
+    desc: 'Copilotで会議メモ・メール文章・Excel分析を自動化し、Notionに情報を集約・体系化。組織全体の知識管理と個人の生産性向上を同時に達成するビジネスプロ向けスタック。'
+  },
+  'copilot-midjourney': {
+    name: 'ビジネス×ビジュアルプレミアムスタック',
+    tagline: '高品質な提案書で差別化を実現',
+    desc: 'Copilotでビジネス文書・分析レポートを作成し、Midjourneyで競合他社を圧倒するビジュアルを追加。プレゼンや提案書のビジュアルクオリティで差別化したいビジネスパーソンに。'
+  },
+  'copilot-zapier': {
+    name: 'Officeオートメーションスタック',
+    tagline: 'M365タスクを全て自動化する最強構成',
+    desc: 'CopilotでOfficeタスクを効率化し、Zapierで定型業務・メール送信・データ転記を完全自動化。残業ゼロを目指すオフィスワーカーの究極スタック。'
+  },
+  'copilot-gamma': {
+    name: '会議×プレゼン最速スタック',
+    tagline: '会議からスライドまで10分で完了',
+    desc: 'Copilotが会議の議事録・アクションアイテムを自動作成し、Gammaで即座に報告スライドを生成。会議→資料作成のループを劇的に短縮するビジネスパーソン向けスタック。'
+  },
+  'copilot-n8n': {
+    name: 'エンタープライズ自動化スタック',
+    tagline: '企業のAI化を一気に推進する構成',
+    desc: 'CopilotでM365全体の業務をAI化し、n8nで社内システムとの連携・自動化フローを構築。IT担当者やDX推進担当が企業全体をAI化するための最強エンタープライズスタック。'
+  },
+  'perplexity-canva': {
+    name: 'リサーチ発信スタック',
+    tagline: '最新情報を即座にコンテンツ化',
+    desc: 'Perplexityでリアルタイムの最新トレンド・情報を引用付きで収集し、Canvaで即座にSNS投稿に変換。時事ネタ・業界ニュースを素早くコンテンツ化して発信したい人に最適。'
+  },
+  'perplexity-notion': {
+    name: '調査×知識管理黄金スタック',
+    tagline: 'リサーチから蓄積まで完全自動化',
+    desc: 'Perplexityで引用付き調査を行い、Notionに体系的に蓄積・管理。リサーチャー・ライター・コンサルタントが知識を資産化するための最もバランスの良い知識型スタック。'
+  },
+  'perplexity-midjourney': {
+    name: 'インフォグラフィッククリエイター',
+    tagline: '調査×高品質ビジュアルで情報を伝える',
+    desc: 'Perplexityで深い調査・データ収集を行い、Midjourneyで視覚的に訴える画像を生成。データ系コンテンツ・インフォグラフィック・教育コンテンツ制作に特化したスタック。'
+  },
+  'perplexity-zapier': {
+    name: '情報収集自動化スタック',
+    tagline: '最新情報を自動収集・配信するシステム',
+    desc: 'Perplexityで特定トピックの最新情報を自動収集し、Zapierで整理・配信を自動化。ニュースレター・業界レポート・競合モニタリングを完全自動化したい人向けの上級スタック。'
+  },
+  'perplexity-gamma': {
+    name: 'リサーチプレゼンスタック',
+    tagline: '引用付き調査から美しい資料まで一気通貫',
+    desc: 'Perplexityで信頼性の高い引用付き調査を行い、Gammaで説得力のある資料に自動変換。学術発表・ビジネスリサーチ・競合分析レポートを高品質で作成したい人に。'
+  },
+  'perplexity-n8n': {
+    name: 'データ収集自動化スタック',
+    tagline: 'Webの情報をAIが自動収集・処理',
+    desc: 'Perplexity APIとn8nを組み合わせ、特定キーワードの最新情報を自動収集→整形→Notion/Slack送信を自動化。情報収集にかける時間をゼロにしたい上級ユーザー向けスタック。'
+  }
+};
+
+// Sub-connector mapping (based on secondary scores)
+const subConnectors = {
+  canva: 'notion', notion: 'canva', midjourney: 'canva',
+  zapier: 'notion', gamma: 'notion', n8n: 'notion'
+};
+
+// Cost mapping
+const costMap = {
+  'chatgpt-canva': '¥0〜¥3,200/月',
+  'chatgpt-notion': '¥0〜¥4,400/月',
+  'chatgpt-midjourney': '¥3,200〜¥6,200/月',
+  'chatgpt-zapier': '¥2,200〜¥6,200/月',
+  'chatgpt-gamma': '¥0〜¥3,200/月',
+  'chatgpt-n8n': '¥0〜¥6,400/月',
+  'claude-canva': '¥0〜¥3,700/月',
+  'claude-notion': '¥0〜¥3,700/月',
+  'claude-midjourney': '¥3,700〜¥5,700/月',
+  'claude-zapier': '¥2,700〜¥6,000/月',
+  'claude-gamma': '¥0〜¥4,000/月',
+  'claude-n8n': '¥0〜¥6,200/月',
+  'gemini-canva': '¥0〜¥1,500/月',
+  'gemini-notion': '¥0〜¥1,200/月',
+  'gemini-midjourney': '¥1,500〜¥3,200/月',
+  'gemini-zapier': '¥2,000〜¥5,500/月',
+  'gemini-gamma': '¥0〜¥1,100/月',
+  'gemini-n8n': '¥0〜¥4,000/月',
+  'copilot-canva': '¥2,000〜¥4,000/月',
+  'copilot-notion': '¥2,000〜¥4,200/月',
+  'copilot-midjourney': '¥3,200〜¥6,400/月',
+  'copilot-zapier': '¥4,000〜¥8,000/月',
+  'copilot-gamma': '¥2,000〜¥3,100/月',
+  'copilot-n8n': '¥2,000〜¥6,200/月',
+  'perplexity-canva': '¥0〜¥3,200/月',
+  'perplexity-notion': '¥0〜¥3,400/月',
+  'perplexity-midjourney': '¥1,500〜¥4,700/月',
+  'perplexity-zapier': '¥2,000〜¥5,700/月',
+  'perplexity-gamma': '¥0〜¥3,000/月',
+  'perplexity-n8n': '¥0〜¥5,200/月'
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let currentQ = 0;
+let scores = { agents: {}, connectors: {} };
+
+function initScores() {
+  Object.keys(AGENTS).forEach(k => scores.agents[k] = 0);
+  Object.keys(CONNECTORS).forEach(k => scores.connectors[k] = 0);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function startQuiz() {
+  initScores();
+  currentQ = 0;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('quiz-step').textContent = `Q${currentQ+1} / ${questions.length}`;
+  document.getElementById('q-icon').textContent = q.icon;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-hint').textContent = q.hint;
+
+  // Progress
+  document.getElementById('progress-bar').style.width = `${(currentQ / questions.length) * 100}%`;
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `
+      <div class="option-text">
+        <strong>${opt.text}</strong>
+        <span>${opt.sub}</span>
+      </div>
+    `;
+    btn.addEventListener('click', () => selectOption(btn, opt.scores));
+    grid.appendChild(btn);
+  });
+}
+
+function selectOption(btn, optScores) {
+  // Visual feedback
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // Add scores
+  Object.entries(optScores).forEach(([key, val]) => {
+    if (key in scores.agents) scores.agents[key] += val;
+    else if (key in scores.connectors) scores.connectors[key] += val;
+  });
+
+  setTimeout(() => nextQuestion(), 380);
+}
+
+function skipQuestion() {
+  nextQuestion();
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= questions.length) {
+    showScreen('loading');
+    document.getElementById('progress-bar').style.width = '100%';
+    setTimeout(() => showResult(), 2200);
+  } else {
+    renderQuestion();
+  }
+}
+
+// ============================================================
+// RESULT
+// ============================================================
+function showResult() {
+  // Find top agent
+  const topAgent = Object.entries(scores.agents).sort((a,b) => b[1]-a[1])[0][0];
+  // Find top 2 connectors
+  const sortedConns = Object.entries(scores.connectors).sort((a,b) => b[1]-a[1]);
+  const topConn1 = sortedConns[0][0];
+  let topConn2 = sortedConns[1][0];
+  // Ensure sub connector is different
+  if (topConn2 === topConn1) topConn2 = sortedConns[2] ? sortedConns[2][0] : subConnectors[topConn1];
+
+  const comboKey = `${topAgent}-${topConn1}`;
+  const combo = comboData[comboKey] || {
+    name: `${AGENTS[topAgent].name}×${CONNECTORS[topConn1].name}スタック`,
+    tagline: 'あなたのライフスタイルに最適なAI組み合わせ',
+    desc: `${AGENTS[topAgent].name}をメインAIとして使い、${CONNECTORS[topConn1].name}でアウトプットを効率化。${CONNECTORS[topConn2 || 'notion'].name}をサブツールとして組み合わせることで、より強力なワークフローが構築できます。`
+  };
+
+  const agent = AGENTS[topAgent];
+  const conn1 = CONNECTORS[topConn1];
+  const conn2 = CONNECTORS[topConn2] || CONNECTORS['notion'];
+
+  // Set DOM
+  document.getElementById('result-name').textContent = combo.name;
+  document.getElementById('result-tagline').textContent = combo.tagline;
+
+  document.getElementById('r-agent-emoji').textContent = agent.emoji;
+  document.getElementById('r-agent-name').textContent = agent.name;
+  document.getElementById('r-agent-desc').textContent = agent.desc;
+  document.getElementById('r-agent-price').textContent = agent.price;
+
+  document.getElementById('r-c1-emoji').textContent = conn1.emoji;
+  document.getElementById('r-c1-name').textContent = conn1.name;
+  document.getElementById('r-c1-desc').textContent = conn1.desc;
+  document.getElementById('r-c1-price').textContent = conn1.price;
+
+  document.getElementById('r-c2-emoji').textContent = conn2.emoji;
+  document.getElementById('r-c2-name').textContent = conn2.name;
+  document.getElementById('r-c2-desc').textContent = conn2.desc;
+  document.getElementById('r-c2-price').textContent = conn2.price;
+
+  document.getElementById('result-desc').textContent = combo.desc;
+  document.getElementById('result-cost').textContent = costMap[comboKey] || '¥0〜';
+
+  showScreen('result');
+
+  // Store for share
+  window._resultData = { combo, agent, conn1, conn2, comboKey };
+}
+
+function shareResult() {
+  const d = window._resultData;
+  if (!d) return;
+  const text = `@ai_side_haku さんのAI Stack診断やってみた🔥\n\n結果「${d.combo.name}」\n\n🧠 メインAI: ${d.agent.name}\n🔌 コネクター: ${d.conn1.name}\n⚡ サブツール: ${d.conn2.name}\n\n${d.combo.tagline}\n\nあなたも診断してみて👇\nhttps://haku-ai-os.github.io/ai-shindan/\n\n#AI副業 #AIツール #AIStack診断`;
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
+function copyResult() {
+  const d = window._resultData;
+  if (!d) return;
+  const text = `【AI Stack診断結果】\n「${d.combo.name}」\nメインAI: ${d.agent.name} × ${d.conn1.name} × ${d.conn2.name}\n${d.combo.tagline}`;
+  navigator.clipboard.writeText(text).then(() => alert('結果をコピーしました！'));
+}
+
+function showDetail() {
+  const d = window._resultData;
+  if (!d) return;
+  alert(`📊 詳細情報\n\n${d.combo.desc}\n\n月額目安: ${costMap[d.comboKey] || '¥0〜'}`);
+}
+
+function retryAll() {
+  initScores();
+  currentQ = 0;
+  document.getElementById('progress-bar').style.width = '0%';
+  showScreen('start');
+  if (window.mascotScreen) window.mascotScreen('start');
+}
+</script>
+
+<!-- ── MASCOT ── -->
+<div id="support-mascot" class="support-mascot">
+  <div class="support-bubble" id="support-bubble">
+    <span id="bubble-text">診断スタートしよう！✨</span>
+  </div>
+  <div class="mascot-wrap">
+    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+      <defs>
+        <!-- Fur displacement -->
+        <filter id="mFluffy" x="-28%" y="-28%" width="156%" height="156%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="5" seed="12" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <!-- Eye glow (stronger) -->
+        <filter id="mEyeGlow" x="-120%" y="-120%" width="340%" height="340%">
+          <feGaussianBlur stdDeviation="7" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Forehead star glow -->
+        <filter id="mStar" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="12" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Chest star glow -->
+        <filter id="mChestStar" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="7" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Armor glow -->
+        <filter id="mArmorGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="2" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Soft blur -->
+        <filter id="mSoft" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5"/>
+        </filter>
+        <!-- Body gradient: deep navy with upper highlight -->
+        <radialGradient id="mBodyG" cx="28%" cy="18%" r="85%">
+          <stop offset="0%"   stop-color="#1e2a80"/>
+          <stop offset="25%"  stop-color="#0a1248"/>
+          <stop offset="65%"  stop-color="#060c2e"/>
+          <stop offset="100%" stop-color="#03060f"/>
+        </radialGradient>
+        <!-- Blue-purple fur side highlight L -->
+        <radialGradient id="mFurHL" cx="0%" cy="50%" r="65%">
+          <stop offset="0%"   stop-color="rgba(60,48,210,0.38)"/>
+          <stop offset="55%"  stop-color="rgba(30,28,150,0.12)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <!-- Blue-purple fur side highlight R -->
+        <radialGradient id="mFurHR" cx="100%" cy="50%" r="65%">
+          <stop offset="0%"   stop-color="rgba(80,38,220,0.38)"/>
+          <stop offset="55%"  stop-color="rgba(40,18,160,0.12)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <!-- Belly -->
+        <radialGradient id="mBellyG" cx="40%" cy="28%" r="70%">
+          <stop offset="0%"   stop-color="#f9f7f4"/>
+          <stop offset="45%"  stop-color="#eeeadf"/>
+          <stop offset="100%" stop-color="#dcd6c5"/>
+        </radialGradient>
+        <!-- Iris: bright cyan -->
+        <radialGradient id="mIrisG" cx="30%" cy="22%" r="80%">
+          <stop offset="0%"   stop-color="#b8f8ff"/>
+          <stop offset="15%"  stop-color="#30d0f8"/>
+          <stop offset="40%"  stop-color="#0888d8"/>
+          <stop offset="75%"  stop-color="#004080"/>
+          <stop offset="100%" stop-color="#010510"/>
+        </radialGradient>
+        <!-- Eye halo -->
+        <radialGradient id="mEyeHaloG" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="rgba(0,220,255,0.62)"/>
+          <stop offset="55%"  stop-color="rgba(0,160,255,0.15)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <!-- Ear inner -->
+        <linearGradient id="mEarInG" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0%"   stop-color="#2878ff"/>
+          <stop offset="50%"  stop-color="#5030d0"/>
+          <stop offset="100%" stop-color="#180860"/>
+        </linearGradient>
+        <!-- Armor silver -->
+        <linearGradient id="mArmorG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"   stop-color="#e8f0f8"/>
+          <stop offset="35%"  stop-color="#b0c4dc"/>
+          <stop offset="75%"  stop-color="#7090b0"/>
+          <stop offset="100%" stop-color="#4c6888"/>
+        </linearGradient>
+        <!-- Forehead star -->
+        <radialGradient id="mFStarG" cx="50%" cy="38%" r="65%">
+          <stop offset="0%"   stop-color="#ffffff"/>
+          <stop offset="20%"  stop-color="#d8eaff"/>
+          <stop offset="55%"  stop-color="#8ab0f0"/>
+          <stop offset="100%" stop-color="#4060b0"/>
+        </radialGradient>
+        <!-- Chest star -->
+        <radialGradient id="mCStarG" cx="50%" cy="40%" r="65%">
+          <stop offset="0%"   stop-color="#ffffff"/>
+          <stop offset="18%"  stop-color="#c8e0ff"/>
+          <stop offset="45%"  stop-color="#7090f8"/>
+          <stop offset="75%"  stop-color="#5060d8"/>
+          <stop offset="100%" stop-color="#3040a0"/>
+        </radialGradient>
+        <!-- Rainbow tail -->
+        <linearGradient id="mTailG" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#2828e8"/>
+          <stop offset="20%"  stop-color="#2850e8"/>
+          <stop offset="38%"  stop-color="#00b8e8"/>
+          <stop offset="58%"  stop-color="#00d890"/>
+          <stop offset="78%"  stop-color="#88e838"/>
+          <stop offset="100%" stop-color="#f8d038"/>
+        </linearGradient>
+        <!-- Aura -->
+        <radialGradient id="mAuraG" cx="50%" cy="60%" r="50%">
+          <stop offset="0%"   stop-color="rgba(40,30,180,0.16)"/>
+          <stop offset="50%"  stop-color="rgba(0,100,220,0.06)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <!-- Shadow -->
+        <radialGradient id="mShadowG" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="rgba(0,30,100,0.22)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <!-- Claw -->
+        <linearGradient id="mClawG" x1="0" y1="0.3" x2="0.3" y2="1">
+          <stop offset="0%"   stop-color="#e8f0f8"/>
+          <stop offset="100%" stop-color="#7090b8"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Ground shadow -->
+      <ellipse cx="100" cy="232" rx="72" ry="7" fill="url(#mShadowG)"/>
+
+      <!-- Power aura + rings -->
+      <ellipse class="char-aura" cx="100" cy="162" rx="102" ry="88" fill="url(#mAuraG)"/>
+      <ellipse class="char-ring1" cx="100" cy="170" rx="96" ry="38" fill="none" stroke="rgba(0,200,255,0.10)" stroke-width="1.5" stroke-dasharray="8 14"/>
+      <ellipse class="char-ring2" cx="100" cy="170" rx="86" ry="30" fill="none" stroke="rgba(90,60,220,0.10)" stroke-width="1" stroke-dasharray="5 18"/>
+
+      <!-- Rainbow tail (behind body) -->
+      <path d="M 148,198 Q 174,190 188,170 Q 202,150 198,132 Q 194,118 184,114 Q 177,112 174,120"
+            fill="none" stroke="url(#mTailG)" stroke-width="22" stroke-linecap="round" opacity="0.94"/>
+      <path d="M 148,198 Q 174,190 188,170 Q 202,150 198,132 Q 194,118 184,114 Q 177,112 174,120"
+            fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="9" stroke-linecap="round"/>
+
+      <!-- BODY: fluffy displaced + clean -->
+      <ellipse cx="100" cy="164" rx="88" ry="80" fill="#080e38" filter="url(#mFluffy)" opacity="0.97"/>
+      <ellipse cx="100" cy="164" rx="82" ry="74" fill="url(#mBodyG)"/>
+      <!-- HEAD: fluffy displaced + clean -->
+      <circle cx="100" cy="92" r="70" fill="#080e38" filter="url(#mFluffy)" opacity="0.97"/>
+      <circle cx="100" cy="92" r="65" fill="url(#mBodyG)"/>
+      <!-- Side fur blue-purple highlights -->
+      <ellipse cx="100" cy="136" rx="92" ry="82" fill="url(#mFurHL)"/>
+      <ellipse cx="100" cy="136" rx="92" ry="82" fill="url(#mFurHR)"/>
+
+      <!-- Body star particles -->
+      <circle cx="36"  cy="138" r="1.4" fill="white" opacity="0.60"/>
+      <circle cx="28"  cy="158" r="1.1" fill="white" opacity="0.48"/>
+      <circle cx="40"  cy="178" r="1.2" fill="white" opacity="0.44"/>
+      <circle cx="32"  cy="194" r="1.0" fill="rgba(120,160,255,0.70)"/>
+      <circle cx="55"  cy="192" r="0.9" fill="white" opacity="0.38"/>
+      <circle cx="164" cy="140" r="1.4" fill="white" opacity="0.60"/>
+      <circle cx="172" cy="160" r="1.1" fill="white" opacity="0.48"/>
+      <circle cx="160" cy="180" r="1.2" fill="white" opacity="0.44"/>
+      <circle cx="168" cy="196" r="1.0" fill="rgba(130,100,255,0.70)"/>
+      <circle cx="145" cy="192" r="0.9" fill="white" opacity="0.38"/>
+      <circle cx="78"  cy="204" r="1.0" fill="rgba(80,160,255,0.55)"/>
+      <circle cx="122" cy="206" r="1.0" fill="rgba(80,160,255,0.50)"/>
+      <!-- Head star particles -->
+      <circle cx="42"  cy="78"  r="1.3" fill="white" opacity="0.55"/>
+      <circle cx="156" cy="74"  r="1.2" fill="white" opacity="0.52"/>
+      <circle cx="36"  cy="98"  r="1.1" fill="rgba(80,180,255,0.58)"/>
+      <circle cx="162" cy="96"  r="1.1" fill="rgba(100,70,255,0.58)"/>
+      <circle cx="52"  cy="52"  r="1.2" fill="white" opacity="0.44"/>
+      <circle cx="148" cy="46"  r="1.1" fill="white" opacity="0.40"/>
+      <circle cx="66"  cy="40"  r="0.9" fill="rgba(100,150,255,0.55)"/>
+      <circle cx="134" cy="38"  r="0.9" fill="rgba(100,150,255,0.50)"/>
+      <ellipse cx="62" cy="58" rx="24" ry="16" fill="rgba(255,255,255,0.055)" transform="rotate(-14,62,58)"/>
+
+      <!-- EARS -->
+      <path d="M 52,44 L 30,2  L 72,38 Z" fill="#0b1130" stroke="#182068" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M 55,42 L 38,8 L 70,37 Z" fill="url(#mEarInG)" opacity="0.90"/>
+      <circle cx="32" cy="5"   r="6.5" fill="rgba(40,120,255,0.65)" filter="url(#mSoft)"/>
+      <circle cx="32" cy="5"   r="3.2" fill="#b0d8ff" opacity="0.92"/>
+      <path d="M 148,44 L 170,2  L 128,38 Z" fill="#0b1130" stroke="#182068" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M 145,42 L 162,8 L 130,37 Z" fill="url(#mEarInG)" opacity="0.90"/>
+      <circle cx="168" cy="5"  r="6.5" fill="rgba(90,50,240,0.65)" filter="url(#mSoft)"/>
+      <circle cx="168" cy="5"  r="3.2" fill="#d0b8ff" opacity="0.92"/>
+
+      <!-- SHOULDER ARMOR LEFT -->
+      <path d="M 12,158 Q 8,130 18,117 Q 30,106 54,114 Q 60,120 58,134 Q 42,128 30,140 Q 20,152 12,158 Z"
+            fill="url(#mArmorG)" filter="url(#mArmorGlow)"/>
+      <path d="M 12,158 Q 8,130 18,117 Q 30,106 54,114 Q 60,120 58,134 Q 42,128 30,140 Q 20,152 12,158 Z"
+            fill="none" stroke="rgba(230,240,255,0.82)" stroke-width="1.5"/>
+      <path d="M 14,120 Q 26,113 46,116" fill="none" stroke="rgba(200,220,255,0.70)" stroke-width="1.2"/>
+      <path d="M 12,132 Q 24,125 42,127" fill="none" stroke="rgba(200,220,255,0.50)" stroke-width="1.0"/>
+      <path d="M 12,144 Q 22,138 36,138" fill="none" stroke="rgba(200,220,255,0.35)" stroke-width="0.9"/>
+      <circle cx="34" cy="110" r="4.5" fill="rgba(0,220,255,0.90)" filter="url(#mSoft)"/>
+      <circle cx="34" cy="110" r="2.2" fill="#88f0ff"/>
+      <!-- SHOULDER ARMOR RIGHT -->
+      <path d="M 188,158 Q 192,130 182,117 Q 170,106 146,114 Q 140,120 142,134 Q 158,128 170,140 Q 180,152 188,158 Z"
+            fill="url(#mArmorG)" filter="url(#mArmorGlow)"/>
+      <path d="M 188,158 Q 192,130 182,117 Q 170,106 146,114 Q 140,120 142,134 Q 158,128 170,140 Q 180,152 188,158 Z"
+            fill="none" stroke="rgba(230,240,255,0.82)" stroke-width="1.5"/>
+      <path d="M 186,120 Q 174,113 154,116" fill="none" stroke="rgba(200,220,255,0.70)" stroke-width="1.2"/>
+      <path d="M 188,132 Q 176,125 158,127" fill="none" stroke="rgba(200,220,255,0.50)" stroke-width="1.0"/>
+      <path d="M 188,144 Q 178,138 164,138" fill="none" stroke="rgba(200,220,255,0.35)" stroke-width="0.9"/>
+      <circle cx="166" cy="110" r="4.5" fill="rgba(100,80,255,0.90)" filter="url(#mSoft)"/>
+      <circle cx="166" cy="110" r="2.2" fill="#c0b0ff"/>
+
+      <!-- WHITE BELLY (large oval) -->
+      <ellipse cx="100" cy="168" rx="54" ry="60" fill="url(#mBellyG)"/>
+      <ellipse cx="86"  cy="150" rx="26" ry="16" fill="rgba(255,255,255,0.35)" transform="rotate(-10,86,150)"/>
+
+      <!-- ARMS LEFT -->
+      <ellipse cx="22"  cy="166" rx="23" ry="19" fill="url(#mBodyG)" transform="rotate(-22,22,166)"/>
+      <ellipse cx="22"  cy="166" rx="23" ry="19" fill="none" stroke="#182060" stroke-width="1.3" transform="rotate(-22,22,166)"/>
+      <path d="M  5,177 L -2,193 L  6,187" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 13,184 L  7,200 L 15,194" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 22,187 L 18,203 L 26,197" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <!-- ARMS RIGHT -->
+      <ellipse cx="178" cy="166" rx="23" ry="19" fill="url(#mBodyG)" transform="rotate(22,178,166)"/>
+      <ellipse cx="178" cy="166" rx="23" ry="19" fill="none" stroke="#182060" stroke-width="1.3" transform="rotate(22,178,166)"/>
+      <path d="M 195,177 L 202,193 L 194,187" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 187,184 L 193,200 L 185,194" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 178,187 L 182,203 L 174,197" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+
+      <!-- EYE HALOS -->
+      <ellipse cx="72"  cy="96" rx="34" ry="24" fill="url(#mEyeHaloG)" filter="url(#mSoft)"/>
+      <ellipse cx="128" cy="96" rx="34" ry="24" fill="url(#mEyeHaloG)" filter="url(#mSoft)"/>
+      <!-- EYE DARK ALMOND SURROUND -->
+      <path d="M 46,96 Q 51,78 72,77 Q 93,78 98,96 Q 93,114 72,115 Q 51,114 46,96 Z" fill="#01060e"/>
+      <path d="M 102,96 Q 107,78 128,77 Q 149,78 154,96 Q 149,114 128,115 Q 107,114 102,96 Z" fill="#01060e"/>
+      <!-- LEFT EYE (almond iris) -->
+      <g class="char-eye-l" filter="url(#mEyeGlow)">
+        <path d="M 48,96 Q 53,80 72,79 Q 91,80 96,96 Q 91,112 72,113 Q 53,112 48,96 Z" fill="url(#mIrisG)"/>
+        <path d="M72,82 L75.5,93.5 L72,105 L68.5,93.5 Z"  fill="rgba(255,255,255,0.97)"/>
+        <path d="M60,96 L70,94 L80,96 L70,98 Z"            fill="rgba(255,255,255,0.97)"/>
+        <ellipse cx="84" cy="84" rx="8" ry="5.5" fill="white" opacity="0.93" transform="rotate(-22,84,84)"/>
+        <ellipse cx="62" cy="107" rx="4.5" ry="3" fill="rgba(255,255,255,0.28)"/>
+        <ellipse cx="72" cy="96"  rx="10" ry="10" fill="#010810" opacity="0.90"/>
+        <circle  cx="74" cy="92"  r="2.8"  fill="rgba(255,255,255,0.62)"/>
+      </g>
+      <path d="M 46,96 Q 51,78 72,77 Q 93,78 98,96 Q 93,114 72,115 Q 51,114 46,96 Z"
+            fill="none" stroke="rgba(0,210,255,0.55)" stroke-width="2.5" filter="url(#mSoft)"/>
+      <!-- RIGHT EYE -->
+      <g class="char-eye-r" filter="url(#mEyeGlow)">
+        <path d="M 104,96 Q 109,80 128,79 Q 147,80 152,96 Q 147,112 128,113 Q 109,112 104,96 Z" fill="url(#mIrisG)"/>
+        <path d="M128,82 L131.5,93.5 L128,105 L124.5,93.5 Z" fill="rgba(255,255,255,0.97)"/>
+        <path d="M116,96 L126,94 L136,96 L126,98 Z"           fill="rgba(255,255,255,0.97)"/>
+        <ellipse cx="140" cy="84" rx="8" ry="5.5" fill="white" opacity="0.93" transform="rotate(22,140,84)"/>
+        <ellipse cx="118" cy="107" rx="4.5" ry="3" fill="rgba(255,255,255,0.28)"/>
+        <ellipse cx="128" cy="96"  rx="10" ry="10" fill="#010810" opacity="0.90"/>
+        <circle  cx="130" cy="92"  r="2.8"  fill="rgba(255,255,255,0.62)"/>
+      </g>
+      <path d="M 102,96 Q 107,78 128,77 Q 149,78 154,96 Q 149,114 128,115 Q 107,114 102,96 Z"
+            fill="none" stroke="rgba(0,210,255,0.55)" stroke-width="2.5" filter="url(#mSoft)"/>
+
+      <!-- ANGRY BROWS (very thick wedge, outer high inner low) -->
+      <path d="M 44,76 Q 58,73 80,84 L 78,92 Q 55,81 42,84 Z" fill="#040a22" opacity="0.96"/>
+      <path d="M 156,76 Q 142,73 120,84 L 122,92 Q 145,81 158,84 Z" fill="#040a22" opacity="0.96"/>
+      <path d="M 46,77 Q 60,74 79,85 L 78,89 Q 60,78 45,81 Z" fill="#0a1030" opacity="0.45"/>
+      <path d="M 154,77 Q 140,74 121,85 L 122,89 Q 140,78 155,81 Z" fill="#0a1030" opacity="0.45"/>
+
+      <!-- NOSE -->
+      <path d="M 94,114 L 100,121 L 106,114 Q 100,110 94,114 Z" fill="#030a22" opacity="0.84"/>
+      <circle cx="97"  cy="115" r="1.3" fill="rgba(255,255,255,0.22)"/>
+      <circle cx="103" cy="115" r="1.3" fill="rgba(255,255,255,0.22)"/>
+      <!-- MOUTH -->
+      <path d="M 90,126 Q 100,123 110,126" stroke="#030a22" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.58"/>
+
+      <!-- FOREHEAD STAR ✦ R=17, r=3.5, center (100,60) -->
+      <g filter="url(#mStar)">
+        <path d="M100,43 L103.5,56.5 L117,60 L103.5,63.5 L100,77 L96.5,63.5 L83,60 L96.5,56.5 Z"
+              fill="url(#mFStarG)" opacity="0.99"/>
+        <path d="M100,43 L103.5,56.5 L117,60 L103.5,63.5 L100,77 L96.5,63.5 L83,60 L96.5,56.5 Z"
+              fill="none" stroke="rgba(200,220,255,0.78)" stroke-width="1.2"/>
+        <circle cx="100" cy="60" r="6"   fill="white" opacity="0.99"/>
+        <circle cx="100" cy="60" r="3.2" fill="#d0e8ff" opacity="0.94"/>
+        <circle cx="100" cy="43" r="3.5" fill="#c0d8ff" opacity="0.85" filter="url(#mSoft)"/>
+        <circle cx="117" cy="60" r="2.8" fill="#c0d8ff" opacity="0.72" filter="url(#mSoft)"/>
+        <circle cx="100" cy="77" r="2.8" fill="#a0c0f0" opacity="0.68" filter="url(#mSoft)"/>
+        <circle cx="83"  cy="60" r="2.8" fill="#c0d8ff" opacity="0.72" filter="url(#mSoft)"/>
+      </g>
+
+      <!-- CHEST STAR ✦ R=24, r=5.5, center (100,158) -->
+      <g filter="url(#mChestStar)">
+        <path d="M100,134 L105.5,152.5 L124,158 L105.5,163.5 L100,182 L94.5,163.5 L76,158 L94.5,152.5 Z"
+              fill="url(#mCStarG)" opacity="0.99"/>
+        <path d="M100,134 L105.5,152.5 L124,158 L105.5,163.5 L100,182 L94.5,163.5 L76,158 L94.5,152.5 Z"
+              fill="none" stroke="rgba(200,220,255,0.72)" stroke-width="1.5"/>
+        <circle cx="100" cy="158" r="10"  fill="white" opacity="0.99"/>
+        <circle cx="100" cy="158" r="6"   fill="#e0eeff" opacity="0.95"/>
+        <circle cx="97"  cy="155" r="3.8" fill="white" opacity="0.88"/>
+        <circle cx="100" cy="134" r="4.2" fill="#b8d8ff" opacity="0.80" filter="url(#mSoft)"/>
+        <circle cx="124" cy="158" r="3.8" fill="#9ab8ff" opacity="0.70" filter="url(#mSoft)"/>
+        <circle cx="100" cy="182" r="3.5" fill="#8088e0" opacity="0.65" filter="url(#mSoft)"/>
+        <circle cx="76"  cy="158" r="3.8" fill="#9ab8ff" opacity="0.70" filter="url(#mSoft)"/>
+      </g>
+
+      <!-- FEET LEFT -->
+      <ellipse cx="72"  cy="222" rx="30" ry="15" fill="url(#mBodyG)"/>
+      <ellipse cx="72"  cy="222" rx="30" ry="15" fill="none" stroke="#182060" stroke-width="1.3"/>
+      <path d="M 46,217 L 39,233 L 47,227" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 59,215 L 53,231 L 61,225" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 72,214 L 68,230 L 76,224" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <!-- FEET RIGHT -->
+      <ellipse cx="128" cy="222" rx="30" ry="15" fill="url(#mBodyG)"/>
+      <ellipse cx="128" cy="222" rx="30" ry="15" fill="none" stroke="#182060" stroke-width="1.3"/>
+      <path d="M 154,217 L 161,233 L 153,227" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 141,215 L 147,231 L 139,225" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+      <path d="M 128,214 L 132,230 L 124,224" fill="url(#mClawG)" stroke="#b0c0d8" stroke-width="1.1"/>
+
+      <!-- Ambient particles -->
+      <circle class="m-particle"      cx="22"  cy="148" r="3.5" fill="#00e0ff" opacity="0.85"/>
+      <circle class="m-particle m-p2" cx="178" cy="154" r="3"   fill="#b080ff" opacity="0.85"/>
+      <circle class="m-particle m-p3" cx="100" cy="228" r="2.5" fill="#80b8ff" opacity="0.66"/>
+      <circle class="m-particle"      cx="40"  cy="180" r="2.5" fill="#9070ff" opacity="0.72"/>
+      <circle class="m-particle m-p2" cx="160" cy="182" r="2.5" fill="#50c8ff" opacity="0.72"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+(function() {
+  const mascot  = document.getElementById('support-mascot');
+  const bubble  = document.getElementById('support-bubble');
+  const bubText = document.getElementById('bubble-text');
+
+  const msgs = {
+    start:  ['AI Stackを見つけよう！⚡', '10問だよ、サクッとやってみて✨', 'きみにぴったりのAIがある！🔮'],
+    quiz:   ['どれが一番ピンとくる？', '正直に選ぶのがポイント！✨', 'もう少し！ゴール近い⚡'],
+    result: ['診断完了！🎉', 'このスタックで副業を始めよう！', 'シェアして仲間を増やそう🚀']
+  };
+  let curScreen = 'start', msgIdx = 0, hideTimer;
+
+  function showBubble(text, dur) {
+    bubText.textContent = text;
+    bubble.classList.add('visible');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => bubble.classList.remove('visible'), dur || 3200);
+  }
+
+  window.mascotScreen = function(screen) {
+    curScreen = screen; msgIdx = 0;
+    setTimeout(() => showBubble(msgs[screen][0]), 400);
+  };
+  setTimeout(() => showBubble(msgs.start[0]), 1800);
+
+  // Drag
+  let isDragging = false, dragStartX, dragStartY, posLeft, posBottom;
+  function getPos() {
+    const r = mascot.getBoundingClientRect();
+    return { left: r.left, bottom: window.innerHeight - r.bottom };
+  }
+  function startDrag(cx, cy) {
+    isDragging = true;
+    const p = getPos(); posLeft = p.left; posBottom = p.bottom;
+    dragStartX = cx; dragStartY = cy;
+    mascot.classList.add('dragging');
+    mascot.style.left = posLeft + 'px'; mascot.style.bottom = posBottom + 'px';
+    mascot.style.right = 'auto'; mascot.style.top = 'auto';
+    bubble.classList.remove('visible'); clearTimeout(hideTimer);
+  }
+  function onDrag(cx, cy) {
+    if (!isDragging) return;
+    let nl = posLeft + (cx - dragStartX);
+    let nb = posBottom - (cy - dragStartY);
+    nl = Math.max(0, Math.min(window.innerWidth  - mascot.offsetWidth,  nl));
+    nb = Math.max(0, Math.min(window.innerHeight - mascot.offsetHeight, nb));
+    mascot.style.left = nl + 'px'; mascot.style.bottom = nb + 'px';
+  }
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+    mascot.classList.remove('dragging');
+    mascot.querySelector('.mascot-wrap').style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+    setTimeout(() => { const w = mascot.querySelector('.mascot-wrap'); if(w) w.style.transition=''; }, 400);
+  }
+  mascot.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e.clientX, e.clientY); });
+  document.addEventListener('mousemove', e => onDrag(e.clientX, e.clientY));
+  document.addEventListener('mouseup', () => endDrag());
+  mascot.addEventListener('touchstart', e => { const t=e.touches[0]; startDrag(t.clientX,t.clientY); }, {passive:true});
+  document.addEventListener('touchmove', e => { if(!isDragging) return; e.preventDefault(); const t=e.touches[0]; onDrag(t.clientX,t.clientY); }, {passive:false});
+  document.addEventListener('touchend', () => endDrag());
+
+  // Click = next message
+  let csx, csy;
+  mascot.addEventListener('mousedown', e => { csx=e.clientX; csy=e.clientY; });
+  mascot.addEventListener('mouseup', e => {
+    if(Math.abs(e.clientX-csx)<5 && Math.abs(e.clientY-csy)<5) {
+      const list = msgs[curScreen]; msgIdx = (msgIdx+1)%list.length;
+      showBubble(list[msgIdx], 3500);
+    }
+  });
+
+  // Pinch to resize
+  let pinchActive=false, pinchStartDist=0, currentScale=1.0;
+  function getTouchDist(t) { const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
+  mascot.addEventListener('touchstart', e => {
+    if(e.touches.length===2) { pinchActive=true; isDragging=false; pinchStartDist=getTouchDist(e.touches); e.preventDefault(); }
+  }, {passive:false});
+  document.addEventListener('touchmove', e => {
+    if(pinchActive && e.touches.length===2) { e.preventDefault();
+      const r=getTouchDist(e.touches)/pinchStartDist;
+      const ns=Math.min(2.5,Math.max(0.5,currentScale*r));
+      mascot.style.transform=`scale(${ns})`; mascot.style.transformOrigin='bottom right';
+    }
+  }, {passive:false});
+  document.addEventListener('touchend', e => {
+    if(pinchActive) {
+      const m=mascot.style.transform&&mascot.style.transform.match(/scale\(([^)]+)\)/);
+      if(m) currentScale=parseFloat(m[1]); pinchActive=false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
